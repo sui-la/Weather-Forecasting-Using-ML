@@ -1,0 +1,683 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Weather Prediction System</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        :root {
+            --primary-color: #4a90e2;
+            --secondary-color: #f39c12;
+            --success-color: #27ae60;
+            --danger-color: #e74c3c;
+            --dark-color: #2c3e50;
+            --light-color: #ecf0f1;
+            --rain-color: #3498db;
+            --sunny-color: #f1c40f;
+        }
+
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        .navbar {
+            background: rgba(255, 255, 255, 0.95) !important;
+            backdrop-filter: blur(10px);
+            box-shadow: 0 2px 20px rgba(0, 0, 0, 0.1);
+        }
+
+        .card {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border: none;
+            border-radius: 15px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 12px 40px rgba(0, 0, 0, 0.15);
+        }
+
+        .btn-primary {
+            background: linear-gradient(45deg, var(--primary-color), #5a9ee2);
+            border: none;
+            border-radius: 25px;
+            padding: 10px 25px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(74, 144, 226, 0.4);
+        }
+
+        .form-control {
+            border-radius: 10px;
+            border: 2px solid #e9ecef;
+            transition: all 0.3s ease;
+        }
+
+        .form-control:focus {
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 0.2rem rgba(74, 144, 226, 0.25);
+        }
+
+        .weather-icon {
+            font-size: 3rem;
+            color: var(--secondary-color);
+        }
+
+        .prediction-result {
+            background: linear-gradient(45deg, var(--success-color), #2ecc71);
+            color: white;
+            border-radius: 15px;
+            padding: 20px;
+            text-align: center;
+            margin: 20px 0;
+        }
+
+        .rain-prediction {
+            background: linear-gradient(45deg, var(--rain-color), #2980b9);
+            color: white;
+            border-radius: 10px;
+            padding: 15px;
+            margin: 10px 0;
+            text-align: center;
+        }
+
+        .model-comparison {
+            background: rgba(255, 255, 255, 0.9);
+            border-radius: 10px;
+            padding: 15px;
+            margin: 10px 0;
+        }
+
+        .model-card {
+            border-left: 4px solid var(--primary-color);
+            padding: 10px;
+            margin: 5px 0;
+            background: rgba(255, 255, 255, 0.8);
+            border-radius: 5px;
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 20px;
+        }
+
+        .spinner-border {
+            color: var(--primary-color);
+        }
+
+        .alert {
+            border-radius: 10px;
+            border: none;
+        }
+
+        .chart-container {
+            position: relative;
+            height: 400px;
+            margin: 20px 0;
+        }
+
+        .feature-card {
+            text-align: center;
+            padding: 20px;
+        }
+
+        .feature-icon {
+            font-size: 2.5rem;
+            color: var(--primary-color);
+            margin-bottom: 15px;
+        }
+
+        .stats-card {
+            background: linear-gradient(45deg, var(--dark-color), #34495e);
+            color: white;
+            text-align: center;
+            padding: 20px;
+            border-radius: 15px;
+        }
+
+        .forecast-item {
+            background: rgba(255, 255, 255, 0.9);
+            border-radius: 10px;
+            padding: 15px;
+            margin: 10px 0;
+            border-left: 4px solid var(--primary-color);
+        }
+
+        .session-item {
+            background: rgba(255, 255, 255, 0.9);
+            border-radius: 10px;
+            padding: 15px;
+            margin: 10px 0;
+            border-left: 4px solid var(--success-color);
+        }
+
+        .model-selector {
+            background: rgba(255, 255, 255, 0.9);
+            border-radius: 10px;
+            padding: 15px;
+            margin: 15px 0;
+        }
+
+        .upload-area {
+            border: 2px dashed var(--primary-color);
+            border-radius: 10px;
+            padding: 30px;
+            text-align: center;
+            background: rgba(255, 255, 255, 0.8);
+            transition: all 0.3s ease;
+        }
+
+        .upload-area:hover {
+            background: rgba(255, 255, 255, 0.9);
+            border-color: var(--success-color);
+        }
+
+        /* Modal Styles */
+        .modal-content {
+            border-radius: 15px;
+            border: none;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+        }
+
+        .modal-header {
+            background: linear-gradient(45deg, var(--primary-color), #5a9ee2);
+            color: white;
+            border-radius: 15px 15px 0 0;
+            border: none;
+        }
+
+        .modal-body {
+            padding: 25px;
+            line-height: 1.6;
+        }
+
+        .model-explanation {
+            background: rgba(255, 255, 255, 0.9);
+            border-radius: 10px;
+            padding: 20px;
+            margin: 15px 0;
+            border-left: 4px solid var(--primary-color);
+        }
+
+        .model-explanation h5 {
+            color: var(--primary-color);
+            margin-bottom: 15px;
+        }
+
+        .model-explanation ul {
+            margin-bottom: 15px;
+        }
+
+        .model-explanation li {
+            margin-bottom: 8px;
+        }
+
+        .info-btn {
+            background: none;
+            border: none;
+            color: var(--primary-color);
+            font-size: 1.2rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-left: 8px;
+        }
+
+        .info-btn:hover {
+            color: var(--secondary-color);
+            transform: scale(1.1);
+        }
+
+        .model-icon {
+            font-size: 1.5rem;
+            margin-right: 10px;
+            color: var(--primary-color);
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar navbar-expand-lg navbar-light fixed-top">
+        <div class="container">
+            <a class="navbar-brand fw-bold" href="#">
+                <i class="fas fa-cloud-sun me-2"></i>
+                Weather Prediction System
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="#home">Home</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#prediction">Prediction</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#forecast">Forecast</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#session">Session</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#analytics">Analytics</a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <div class="container mt-5 pt-5">
+        <!-- Home Section -->
+        <section id="home" class="mb-5">
+            <div class="row">
+                <div class="col-12 text-center mb-4">
+                    <h1 class="display-4 text-white fw-bold mb-3">
+                        <i class="fas fa-cloud-sun me-3"></i>
+                        Weather Prediction System
+                    </h1>
+                    <p class="lead text-white-50">Advanced Machine Learning Weather Forecasting with Multiple Models</p>
+                </div>
+            </div>
+
+            <!-- Features -->
+            <div class="row mb-5">
+                <div class="col-md-3 mb-3">
+                    <div class="card feature-card h-100">
+                        <div class="feature-icon">
+                            <i class="fas fa-brain"></i>
+                        </div>
+                        <h5>Multiple ML Models</h5>
+                        <p>Random Forest, ANN, SVM, and KNN for comprehensive predictions</p>
+                    </div>
+                </div>
+                <div class="col-md-3 mb-3">
+                    <div class="card feature-card h-100">
+                        <div class="feature-icon">
+                            <i class="fas fa-cloud-rain"></i>
+                        </div>
+                        <h5>Rain Prediction</h5>
+                        <p>Advanced rain classification for better weather forecasting</p>
+                    </div>
+                </div>
+                <div class="col-md-3 mb-3">
+                    <div class="card feature-card h-100">
+                        <div class="feature-icon">
+                            <i class="fas fa-history"></i>
+                        </div>
+                        <h5>Session Records</h5>
+                        <p>Track all predictions in your current session</p>
+                    </div>
+                </div>
+                <div class="col-md-3 mb-3">
+                    <div class="card feature-card h-100">
+                        <div class="feature-icon">
+                            <i class="fas fa-upload"></i>
+                        </div>
+                        <h5>Model Training</h5>
+                        <p>Upload your own dataset and train custom models</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Prediction Section -->
+        <section id="prediction" class="mb-5">
+            <div class="row">
+                <div class="col-lg-10 mx-auto">
+                    <div class="card">
+                        <div class="card-header bg-primary text-white text-center">
+                            <h4><i class="fas fa-magic me-2"></i>Weather Prediction</h4>
+                        </div>
+                        <div class="card-body">
+                            <!-- Model Training Section -->
+                            <div class="upload-area mb-4">
+                                <h5 class="mb-3">
+                                    <i class="fas fa-upload me-2"></i>
+                                    Upload Custom Dataset & Train Models
+                                </h5>
+                                <p class="text-muted mb-3">
+                                    Upload your own CSV dataset to train custom models. 
+                                    Required columns: date, tavg, tmin, tmax, prcp, wspd, pres
+                                </p>
+                                <div class="row">
+                                    <div class="col-md-8">
+                                        <input type="file" class="form-control" id="datasetFile" accept=".csv">
+                                    </div>
+                                    <div class="col-md-4">
+                                        <button type="button" class="btn btn-success w-100" onclick="uploadAndTrain()">
+                                            <i class="fas fa-brain me-2"></i>Upload & Train
+                                        </button>
+                                    </div>
+                                </div>
+                                <div class="loading mt-3" id="uploadLoading">
+                                    <div class="spinner-border" role="status">
+                                        <span class="visually-hidden">Loading...</span>
+                                    </div>
+                                    <p class="mt-2">Uploading and training models...</p>
+                                </div>
+                                <div id="uploadResult"></div>
+                            </div>
+
+                            <!-- Model Selection -->
+                            <div class="model-selector">
+                                <h6 class="mb-3">Select ML Model: <button type="button" class="info-btn" onclick="showModelInfo()" title="Learn about ML models">
+                                    <i class="fas fa-info-circle"></i>
+                                </button></h6>
+                                <div class="row">
+                                    <div class="col-md-3 mb-2">
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="radio" name="modelType" id="randomForest" value="random_forest" checked>
+                                            <label class="form-check-label" for="randomForest">
+                                                <i class="fas fa-tree me-1"></i>Random Forest
+                                            </label>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-3 mb-2">
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="radio" name="modelType" id="ann" value="ann">
+                                            <label class="form-check-label" for="ann">
+                                                <i class="fas fa-network-wired me-1"></i>Neural Network
+                                            </label>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-3 mb-2">
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="radio" name="modelType" id="svm" value="svm">
+                                            <label class="form-check-label" for="svm">
+                                                <i class="fas fa-chart-line me-1"></i>SVM
+                                            </label>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-3 mb-2">
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="radio" name="modelType" id="knn" value="knn">
+                                            <label class="form-check-label" for="knn">
+                                                <i class="fas fa-users me-1"></i>KNN
+                                            </label>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <form id="predictionForm">
+                                <div class="row">
+                                    <div class="col-md-6 mb-3">
+                                        <label for="tavg" class="form-label">Average Temperature (°C)</label>
+                                        <input type="number" class="form-control" id="tavg" step="0.1" required>
+                                    </div>
+                                    <div class="col-md-6 mb-3">
+                                        <label for="tmin" class="form-label">Minimum Temperature (°C)</label>
+                                        <input type="number" class="form-control" id="tmin" step="0.1" required>
+                                    </div>
+                                </div>
+                                <div class="row">
+                                    <div class="col-md-6 mb-3">
+                                        <label for="tmax" class="form-label">Maximum Temperature (°C)</label>
+                                        <input type="number" class="form-control" id="tmax" step="0.1" required>
+                                    </div>
+                                    <div class="col-md-6 mb-3">
+                                        <label for="prcp" class="form-label">Precipitation (mm)</label>
+                                        <input type="number" class="form-control" id="prcp" step="0.1" required>
+                                    </div>
+                                </div>
+                                <div class="row">
+                                    <div class="col-md-6 mb-3">
+                                        <label for="wspd" class="form-label">Wind Speed (km/h)</label>
+                                        <input type="number" class="form-control" id="wspd" step="0.1" required>
+                                    </div>
+                                    <div class="col-md-6 mb-3">
+                                        <label for="pres" class="form-label">Pressure (hPa)</label>
+                                        <input type="number" class="form-control" id="pres" step="0.1" required>
+                                    </div>
+                                </div>
+                                <div class="row">
+                                    <div class="col-md-6 mb-3">
+                                        <label for="date" class="form-label">Date</label>
+                                        <input type="date" class="form-control" id="date">
+                                    </div>
+                                    <div class="col-md-6 mb-3 d-flex align-items-end">
+                                        <button type="submit" class="btn btn-primary w-100">
+                                            <i class="fas fa-search me-2"></i>Predict Weather
+                                        </button>
+                                    </div>
+                                </div>
+                            </form>
+
+                            <div class="loading" id="predictionLoading">
+                                <div class="spinner-border" role="status">
+                                    <span class="visually-hidden">Loading...</span>
+                                </div>
+                                <p class="mt-2">Making prediction...</p>
+                            </div>
+
+                            <div id="predictionResult"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Forecast Section -->
+        <section id="forecast" class="mb-5">
+            <div class="row">
+                <div class="col-lg-8 mx-auto">
+                    <div class="card">
+                        <div class="card-header bg-success text-white text-center">
+                            <h4><i class="fas fa-calendar-week me-2"></i>Weather Forecast</h4>
+                        </div>
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col-md-4 mb-3">
+                                    <label for="forecastDays" class="form-label">Number of Days</label>
+                                    <select class="form-control" id="forecastDays">
+                                        <option value="3">3 Days</option>
+                                        <option value="5">5 Days</option>
+                                        <option value="7" selected>7 Days</option>
+                                        <option value="10">10 Days</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-4 mb-3">
+                                    <label for="forecastModel" class="form-label">Model</label>
+                                    <select class="form-control" id="forecastModel">
+                                        <option value="random_forest">Random Forest</option>
+                                        <option value="ann">Neural Network</option>
+                                        <option value="svm">SVM</option>
+                                        <option value="knn">KNN</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-4 mb-3 d-flex align-items-end">
+                                    <button type="button" class="btn btn-success w-100" onclick="generateForecast()">
+                                        <i class="fas fa-calendar-alt me-2"></i>Generate Forecast
+                                    </button>
+                                </div>
+                            </div>
+
+                            <div class="loading" id="forecastLoading">
+                                <div class="spinner-border" role="status">
+                                    <span class="visually-hidden">Loading...</span>
+                                </div>
+                                <p class="mt-2">Generating forecast...</p>
+                            </div>
+
+                            <div id="forecastResult"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Session Section -->
+        <section id="session" class="mb-5">
+            <div class="row">
+                <div class="col-12">
+                    <div class="card">
+                        <div class="card-header bg-info text-white text-center">
+                            <h4><i class="fas fa-history me-2"></i>Session Records</h4>
+                        </div>
+                        <div class="card-body">
+                            <div class="row mb-3">
+                                <div class="col-md-6">
+                                    <h6>Current Session Predictions: <span id="sessionCount" class="badge bg-primary">0</span></h6>
+                                </div>
+                                <div class="col-md-6 text-end">
+                                    <button type="button" class="btn btn-outline-danger" onclick="clearSession()">
+                                        <i class="fas fa-trash me-2"></i>Clear Session
+                                    </button>
+                                </div>
+                            </div>
+                            <div id="sessionRecords"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Analytics Section -->
+        <section id="analytics" class="mb-5">
+            <div class="row">
+                <div class="col-12">
+                    <div class="card">
+                        <div class="card-header bg-warning text-dark text-center">
+                            <h4><i class="fas fa-chart-bar me-2"></i>Weather Analytics</h4>
+                        </div>
+                        <div class="card-body">
+                            <div class="row mb-4">
+                                <div class="col-md-3 mb-3">
+                                    <div class="stats-card">
+                                        <h3 id="totalRecords">0</h3>
+                                        <p>Total Records</p>
+                                    </div>
+                                </div>
+                                <div class="col-md-3 mb-3">
+                                    <div class="stats-card">
+                                        <h3 id="avgTemp">0°C</h3>
+                                        <p>Average Temperature</p>
+                                    </div>
+                                </div>
+                                <div class="col-md-3 mb-3">
+                                    <div class="stats-card">
+                                        <h3 id="maxTemp">0°C</h3>
+                                        <p>Maximum Temperature</p>
+                                    </div>
+                                </div>
+                                <div class="col-md-3 mb-3">
+                                    <div class="stats-card">
+                                        <h3 id="rainyDays">0</h3>
+                                        <p>Rainy Days</p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="chart-container">
+                                <canvas id="weatherChart"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </div>
+
+    <!-- Footer -->
+    <footer class="bg-dark text-white text-center py-4 mt-5">
+        <div class="container">
+            <p>&copy; 2024 Weather Prediction System. Built with Machine Learning.</p>
+        </div>
+    </footer>
+
+    <!-- Model Information Modal -->
+    <div class="modal fade" id="modelInfoModal" tabindex="-1" aria-labelledby="modelInfoModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="modelInfoModalLabel">
+                        <i class="fas fa-brain me-2"></i>How Machine Learning Models Work
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="model-explanation">
+                        <h5><i class="fas fa-tree model-icon"></i>Random Forest</h5>
+                        <p><strong>How it works:</strong> Random Forest is an ensemble learning method that constructs multiple decision trees during training and outputs the mean prediction of the individual trees.</p>
+                        <ul>
+                            <li><strong>Ensemble Method:</strong> Combines predictions from multiple decision trees</li>
+                            <li><strong>Randomness:</strong> Each tree is trained on a random subset of data and features</li>
+                            <li><strong>Robustness:</strong> Reduces overfitting and improves accuracy</li>
+                            <li><strong>Feature Importance:</strong> Can identify which weather factors are most important</li>
+                        </ul>
+                        <p><strong>For Weather Prediction:</strong> Uses patterns in temperature, precipitation, wind speed, and pressure to predict future weather conditions.</p>
+                    </div>
+
+                    <div class="model-explanation">
+                        <h5><i class="fas fa-network-wired model-icon"></i>Neural Network (ANN)</h5>
+                        <p><strong>How it works:</strong> Artificial Neural Networks are inspired by biological neural networks and consist of interconnected nodes (neurons) organized in layers.</p>
+                        <ul>
+                            <li><strong>Layers:</strong> Input layer receives weather data, hidden layers process it, output layer gives prediction</li>
+                            <li><strong>Learning:</strong> Adjusts connection weights through backpropagation</li>
+                            <li><strong>Non-linear:</strong> Can capture complex, non-linear relationships in weather patterns</li>
+                            <li><strong>Adaptive:</strong> Learns from historical weather data to improve predictions</li>
+                        </ul>
+                        <p><strong>For Weather Prediction:</strong> Learns complex patterns in weather data to predict temperature and precipitation with high accuracy.</p>
+                    </div>
+
+                    <div class="model-explanation">
+                        <h5><i class="fas fa-chart-line model-icon"></i>Support Vector Machine (SVM)</h5>
+                        <p><strong>How it works:</strong> SVM finds the optimal hyperplane that best separates different classes or predicts continuous values by maximizing the margin between data points.</p>
+                        <ul>
+                            <li><strong>Kernel Trick:</strong> Uses mathematical functions to transform data into higher dimensions</li>
+                            <li><strong>Margin Maximization:</strong> Finds the best boundary between different weather conditions</li>
+                            <li><strong>Regularization:</strong> Balances model complexity with prediction accuracy</li>
+                            <li><strong>Robust:</strong> Works well with limited training data</li>
+                        </ul>
+                        <p><strong>For Weather Prediction:</strong> Creates optimal boundaries to separate different weather patterns and predict temperature based on input features.</p>
+                    </div>
+
+                    <div class="model-explanation">
+                        <h5><i class="fas fa-users model-icon"></i>K-Nearest Neighbors (KNN)</h5>
+                        <p><strong>How it works:</strong> KNN is a simple, instance-based learning algorithm that classifies objects based on the majority class of their k nearest neighbors.</p>
+                        <ul>
+                            <li><strong>Distance-based:</strong> Finds the k most similar historical weather patterns</li>
+                            <li><strong>Lazy Learning:</strong> No explicit training phase, learns from stored instances</li>
+                            <li><strong>Local Approximation:</strong> Predicts based on similar past weather conditions</li>
+                            <li><strong>Simple:</strong> Easy to understand and implement</li>
+                        </ul>
+                        <p><strong>For Weather Prediction:</strong> Finds the most similar historical weather patterns to the current conditions and predicts based on what happened in those similar situations.</p>
+                    </div>
+
+                    <div class="alert alert-info">
+                        <h6><i class="fas fa-lightbulb me-2"></i>Why Multiple Models?</h6>
+                        <p>Each model has different strengths and weaknesses. By comparing predictions from multiple models, we can:</p>
+                        <ul>
+                            <li>Get more reliable predictions through ensemble methods</li>
+                            <li>Understand uncertainty in weather forecasting</li>
+                            <li>Choose the best model for specific weather conditions</li>
+                            <li>Improve overall prediction accuracy</li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="script.js"></script>
+</body>
+</html> 
