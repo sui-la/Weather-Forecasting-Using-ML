@@ -11,9 +11,6 @@ from pathlib import Path
 backend_path = Path(__file__).parent / 'backend'
 sys.path.insert(0, str(backend_path))
 
-# Change to backend directory
-os.chdir(backend_path)
-
 # Import and run the Flask app
 from app import app
 

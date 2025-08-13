@@ -693,4 +693,26 @@ async function trainModel() {
 function showModelInfo() {
     const modal = new bootstrap.Modal(document.getElementById('modelInfoModal'));
     modal.show();
+}
+
+// Download weather data functions
+function showCustomDownload() {
+    const section = document.getElementById('customDownloadSection');
+    section.style.display = section.style.display === 'none' ? 'block' : 'none';
+}
+
+function downloadFromMeteostat() {
+    const url = 'https://meteostat.net/en/place/my/kuala-lumpur?s=48647&t=2025-07-01/2025-07-31';
+    window.open(url, '_blank');
+}
+
+function downloadFromUrl(customUrl = null) {
+    const url = customUrl || document.getElementById('weatherUrl').value;
+    
+    if (!url) {
+        alert('Please enter a valid URL');
+        return;
+    }
+    
+    window.open(url, '_blank');
 } 
