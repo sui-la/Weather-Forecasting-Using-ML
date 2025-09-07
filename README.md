@@ -1,6 +1,6 @@
-# Weather Prediction System
+# Weather Forecasting Using Machine Learning 🌤️
 
-A full-stack weather prediction application built with Python (Flask) backend and modern HTML/CSS/JavaScript frontend, featuring machine learning algorithms for accurate weather forecasting.
+A comprehensive full-stack weather prediction application built with Python (Flask) backend and modern HTML/CSS/JavaScript frontend, featuring advanced machine learning algorithms for accurate weather forecasting and analysis.
 
 ## 🌟 Features
 
@@ -11,18 +11,27 @@ A full-stack weather prediction application built with Python (Flask) backend an
 - **Modern UI/UX**: Responsive design with beautiful animations and intuitive interface
 - **RESTful API**: Clean API endpoints for easy integration
 
-## 🏗️ Architecture
+## 🏗️ Project Structure
 
 ```
-Weather-Prediction-System/
+Weather-Forecasting-Using-ML/
 ├── backend/
-│   ├── app.py              # Flask API server
+│   ├── app.py              # Flask API server with ML models
 │   └── __init__.py         # Package initialization
 ├── frontend/
 │   ├── index.html          # Main application interface
 │   └── script.js           # Frontend JavaScript logic
-├── export.csv              # Weather dataset
+├── datasets/
+│   ├── seattle-weather.csv # Primary weather dataset
+│   └── export.csv          # Processed weather dataset
 ├── requirements.txt        # Python dependencies
+├── run.py                  # Main application runner
+├── start_frontend.py       # Frontend server starter
+├── start_weather_system.bat # Windows batch file for easy startup
+├── install_dependencies.bat # Windows batch file for dependency installation
+├── MODEL_COMPARISON_ANALYSIS.md # Detailed ML model analysis
+├── ANALYSIS.md             # Project analysis documentation
+├── .gitignore             # Git ignore rules
 └── README.md              # Project documentation
 ```
 
@@ -38,7 +47,7 @@ Weather-Prediction-System/
 
 1. **Clone the repository**
    ```bash
-   git clone <repository-url>
+   git clone https://github.com/sui-la/Weather-Forecasting-Using-ML.git
    cd Weather-Forecasting-Using-ML
    ```
 
@@ -46,23 +55,38 @@ Weather-Prediction-System/
    ```bash
    pip install -r requirements.txt
    ```
-
-3. **Start the backend server**
+   
+   **Windows users**: You can also use the provided batch file:
    ```bash
+   install_dependencies.bat
+   ```
+
+3. **Start the application**
+   
+   **Option A: Using the main runner (Recommended)**
+   ```bash
+   python run.py
+   ```
+   
+   **Option B: Using Windows batch file**
+   ```bash
+   start_weather_system.bat
+   ```
+   
+   **Option C: Manual startup**
+   ```bash
+   # Terminal 1 - Start backend
    cd backend
    python app.py
+   
+   # Terminal 2 - Start frontend
+   python start_frontend.py
    ```
-   The API will be available at `http://localhost:5000`
 
-4. **Open the frontend**
-   - Navigate to the `frontend` folder
-   - Open `index.html` in your web browser
-   - Or serve it using a local server:
-     ```bash
-     cd frontend
-     python -m http.server 8000
-     ```
-   - Access the application at `http://localhost:8000`
+4. **Access the application**
+   - Backend API: `http://localhost:5000`
+   - Frontend Interface: `http://localhost:8000`
+   - Open your browser and navigate to `http://localhost:8000`
 
 ## 📊 API Endpoints
 
@@ -96,6 +120,8 @@ Weather-Prediction-System/
 
 ### Data Retrieval
 - **GET** `/api/data` - Get historical weather data
+- **GET** `/api/dataset-info` - Get dataset statistics and information
+- **GET** `/api/model-info` - Get trained model information and performance metrics
 
 ## 🎯 Usage
 
@@ -161,10 +187,24 @@ Weather-Prediction-System/
 ## 📈 Model Performance
 
 The system uses a Random Forest model with the following characteristics:
+- **Algorithm**: Random Forest Regressor
+- **Target Variable**: Maximum temperature prediction
+- **Features**: 9 input features including weather parameters and temporal data
+- **Performance Metrics**: 
+  - Mean Absolute Error (MAE)
+  - Mean Squared Error (MSE) 
+  - R-squared (R²) score
 - **Accuracy**: High prediction accuracy for temperature forecasting
-- **Features**: Multiple weather parameters for comprehensive analysis
 - **Scalability**: Can handle additional data and features
 - **Real-time**: Fast prediction response times
+
+### Dataset Information
+- **Primary Dataset**: Seattle weather data (1,463 records)
+- **Features**: Temperature (avg, min, max), precipitation, wind speed, pressure
+- **Time Range**: Historical weather data for comprehensive training
+- **Data Quality**: Preprocessed and validated for ML model training
+
+For detailed model analysis and comparison, see [MODEL_COMPARISON_ANALYSIS.md](MODEL_COMPARISON_ANALYSIS.md)
 
 ## 🔄 Data Flow
 
@@ -174,20 +214,30 @@ The system uses a Random Forest model with the following characteristics:
 4. **Prediction**: Real-time predictions based on input parameters
 5. **Visualization**: Results displayed with interactive charts
 
-## 🛠️ Customization
+## 🛠️ Customization & Development
 
 ### Adding New Features
 
-1. **Backend**: Modify `app.py` to include new ML algorithms
-2. **Frontend**: Update `index.html` and `script.js` for new UI elements
+1. **Backend**: Modify `backend/app.py` to include new ML algorithms
+2. **Frontend**: Update `frontend/index.html` and `frontend/script.js` for new UI elements
 3. **Data**: Add new columns to the dataset and update preprocessing
+4. **Models**: Extend the ML pipeline with additional algorithms
 
 ### Model Improvements
 
-- Try different ML algorithms (XGBoost, Neural Networks)
-- Add more features (humidity, visibility, etc.)
-- Implement ensemble methods
-- Add model validation and cross-validation
+- **Advanced Algorithms**: Try XGBoost, Neural Networks, or Support Vector Regression
+- **Feature Engineering**: Add humidity, visibility, cloud cover, or seasonal indicators
+- **Ensemble Methods**: Combine multiple models for better accuracy
+- **Cross-Validation**: Implement k-fold cross-validation for robust evaluation
+- **Hyperparameter Tuning**: Optimize model parameters using GridSearch or RandomSearch
+
+### Extending the Application
+
+- **Real-time Data**: Integrate with weather APIs (OpenWeatherMap, WeatherAPI)
+- **Geographic Support**: Add location-based predictions
+- **Mobile App**: Create a mobile version using React Native or Flutter
+- **Database Integration**: Replace CSV files with PostgreSQL or MongoDB
+- **User Authentication**: Add user accounts and personalized forecasts
 
 ## 🐛 Troubleshooting
 
@@ -221,19 +271,39 @@ This project is open source and available under the MIT License.
 
 ## 🤝 Contributing
 
-1. Fork the repository
-2. Create a feature branch
-3. Make your changes
-4. Test thoroughly
-5. Submit a pull request
+We welcome contributions! Here's how you can help:
 
-## 📞 Support
+1. **Fork the repository**
+2. **Create a feature branch**: `git checkout -b feature/amazing-feature`
+3. **Make your changes** and test thoroughly
+4. **Commit your changes**: `git commit -m 'Add amazing feature'`
+5. **Push to the branch**: `git push origin feature/amazing-feature`
+6. **Open a Pull Request**
 
-For questions or issues:
-- Check the troubleshooting section
-- Review the API documentation
-- Open an issue on GitHub
+### Contribution Guidelines
+
+- Follow PEP 8 style guidelines for Python code
+- Add tests for new features
+- Update documentation as needed
+- Ensure all tests pass before submitting
+
+## 📞 Support & Contact
+
+For questions, issues, or suggestions:
+
+- **GitHub Issues**: [Open an issue](https://github.com/sui-la/Weather-Forecasting-Using-ML/issues)
+- **Documentation**: Check the troubleshooting section above
+- **API Reference**: Review the API endpoints documentation
+- **Model Analysis**: See [MODEL_COMPARISON_ANALYSIS.md](MODEL_COMPARISON_ANALYSIS.md) for detailed ML insights
+
+## 🙏 Acknowledgments
+
+- **Dataset**: Seattle weather data for training the ML models
+- **Libraries**: Flask, Scikit-learn, Pandas, NumPy, Chart.js, Bootstrap
+- **Community**: Open source contributors and the Python ML community
 
 ---
 
-**Built with ❤️ using Python, Flask, and modern web technologies**
+**Built with ❤️ using Python, Flask, Scikit-learn, and modern web technologies**
+
+*Last updated: January 2025*
