@@ -12,8 +12,11 @@ document.addEventListener('DOMContentLoaded', function() {
     // Set default date to today
     document.getElementById('date').value = new Date().toISOString().split('T')[0];
     
-    // Load initial data
-    loadWeatherData();
+    // Initialize analytics with placeholder
+    showAnalyticsPlaceholder();
+    showModelComparisonPlaceholder();
+    
+    // Load session data (but not weather data initially)
     loadSessionData();
     
     // Setup form submission
@@ -26,6 +29,14 @@ function setupEventListeners() {
     document.getElementById('predictionForm').addEventListener('submit', function(e) {
         e.preventDefault();
         makePrediction();
+    });
+    
+    // Dataset dropdown click event - load datasets only when clicked
+    document.getElementById('datasetSelect').addEventListener('click', function() {
+        // Check if datasets are already loaded
+        if (this.children.length === 1 && this.children[0].value === '') {
+            loadAvailableDatasets();
+        }
     });
     
     // Smooth scrolling for navigation
@@ -447,17 +458,47 @@ async function clearSession() {
     }
 }
 
+// Analytics placeholder management
+function showAnalyticsPlaceholder() {
+    document.getElementById('analyticsPlaceholder').style.display = 'block';
+    document.getElementById('analyticsContent').style.display = 'none';
+}
+
+function showAnalyticsContent() {
+    document.getElementById('analyticsPlaceholder').style.display = 'none';
+    document.getElementById('analyticsContent').style.display = 'block';
+}
+
+// Model comparison placeholder management
+function showModelComparisonPlaceholder() {
+    document.getElementById('modelComparisonPlaceholder').style.display = 'block';
+    document.getElementById('modelComparisonContent').style.display = 'none';
+}
+
+function showModelComparisonContent() {
+    document.getElementById('modelComparisonPlaceholder').style.display = 'none';
+    document.getElementById('modelComparisonContent').style.display = 'block';
+}
+
 // Load weather data for analytics
 async function loadWeatherData() {
     try {
+        console.log('Loading weather data...');
         const response = await fetch(`${API_BASE_URL}/data`);
         const result = await response.json();
         
+        console.log('Weather data response:', result);
+        
         if (result.status === 'success') {
+            console.log('Data received:', result.data.length, 'records');
+            showAnalyticsContent(); // Show analytics content when data is loaded
+            showModelComparisonContent(); // Show model comparison content when data is loaded
             updateAnalytics(result.data);
             createWeatherChart(result.data);
         } else {
             console.error('Failed to load weather data:', result.message);
+            showAnalyticsPlaceholder(); // Show placeholder if data loading fails
+            showModelComparisonPlaceholder(); // Show placeholder if data loading fails
         }
     } catch (error) {
         console.error('Error loading weather data:', error);
@@ -466,12 +507,24 @@ async function loadWeatherData() {
 
 // Update analytics statistics
 function updateAnalytics(data) {
-    if (!data || data.length === 0) return;
+    console.log('updateAnalytics called with:', data);
+    
+    if (!data || data.length === 0) {
+        console.log('No data to update analytics');
+        return;
+    }
     
     const temperatures = data.map(item => item.tmax).filter(temp => temp !== null);
     const avgTemp = temperatures.reduce((a, b) => a + b, 0) / temperatures.length;
     const maxTemp = Math.max(...temperatures);
     const rainyDays = data.filter(item => item.prcp > 0).length;
+    
+    console.log('Analytics calculated:', {
+        totalRecords: data.length,
+        avgTemp: avgTemp.toFixed(1),
+        maxTemp: maxTemp.toFixed(1),
+        rainyDays: rainyDays
+    });
     
     document.getElementById('totalRecords').textContent = data.length;
     document.getElementById('avgTemp').textContent = `${avgTemp.toFixed(1)}°C`;
@@ -629,7 +682,6 @@ function getTemperatureClass(temperature) {
 
 function getModelDisplayName(modelName) {
     const modelNames = {
-        'random_forest': 'Random Forest',
         'ann': 'Neural Network',
         'svm': 'SVM',
         'knn': 'KNN'
@@ -639,7 +691,6 @@ function getModelDisplayName(modelName) {
 
 function getModelAccuracy(modelName) {
     const accuracies = {
-        'random_forest': 'R²: 0.71',
         'ann': 'R²: 0.68',
         'svm': 'R²: 0.65',
         'knn': 'R²: 0.62'
@@ -715,4 +766,464 @@ function downloadFromUrl(customUrl = null) {
     }
     
     window.open(url, '_blank');
-} 
+}
+
+// Model Comparison Functions
+let accuracyChart = null;
+let errorChart = null;
+
+async function loadModelComparison() {
+    showLoading('modelComparisonLoading');
+    hideElement('modelComparisonResults');
+    hideElement('modelInfoResults');
+    
+    try {
+        const response = await fetch(`${API_BASE_URL}/models/compare`);
+        const data = await response.json();
+        
+        if (data.status === 'success') {
+            displayModelComparison(data.comparison);
+            showElement('modelComparisonResults');
+        } else {
+            showError('modelComparisonResults', 'Model Comparison Error: ' + data.message);
+        }
+    } catch (error) {
+        console.error('Error loading model comparison:', error);
+        showError('modelComparisonResults', 'Failed to load model comparison. Please check if models are trained.');
+    } finally {
+        hideLoading('modelComparisonLoading');
+    }
+}
+
+async function loadModelInfo() {
+    showLoading('modelComparisonLoading');
+    hideElement('modelComparisonResults');
+    hideElement('modelInfoResults');
+    
+    try {
+        const response = await fetch(`${API_BASE_URL}/models/info`);
+        const data = await response.json();
+        
+        if (data.status === 'success') {
+            displayModelInfo(data.models, data.training_status);
+            showElement('modelInfoResults');
+        } else {
+            showError('modelInfoResults', 'Model Info Error: ' + data.message);
+        }
+    } catch (error) {
+        console.error('Error loading model info:', error);
+        showError('modelInfoResults', 'Failed to load model information.');
+    } finally {
+        hideLoading('modelComparisonLoading');
+    }
+}
+
+function displayModelComparison(comparison) {
+    // Display best model recommendation
+    const bestModelInfo = document.getElementById('bestModelInfo');
+    bestModelInfo.innerHTML = `
+        <strong>${comparison.best_model.name}</strong> is the recommended model.<br>
+        <small>${comparison.best_model.reason}</small>
+    `;
+    
+    // Display performance rankings
+    const rankingsContainer = document.getElementById('modelRankings');
+    rankingsContainer.innerHTML = '';
+    
+    comparison.performance_ranking.forEach(model => {
+        const rankCard = document.createElement('div');
+        rankCard.className = 'model-card mb-3';
+        
+        const rankIcon = getRankIcon(model.rank);
+        const performanceColor = getPerformanceColor(model.accuracy_percentage);
+        
+        rankCard.innerHTML = `
+            <div class="row align-items-center">
+                <div class="col-md-1">
+                    <h4 class="text-center">${rankIcon} ${model.rank}</h4>
+                </div>
+                <div class="col-md-3">
+                    <h6>${model.name}</h6>
+                    <small class="text-muted">${model.model}</small>
+                </div>
+                <div class="col-md-2">
+                    <div style="color: ${performanceColor};">
+                        <strong>${model.accuracy_percentage}%</strong>
+                        <br><small>Accuracy (R²)</small>
+                    </div>
+                </div>
+                <div class="col-md-2">
+                    <strong>${model.mae}</strong>
+                    <br><small>MAE</small>
+                </div>
+                <div class="col-md-2">
+                    <strong>${model.rmse}</strong>
+                    <br><small>RMSE</small>
+                </div>
+                <div class="col-md-2">
+                    <span class="badge" style="background-color: ${performanceColor}; color: white;">
+                        ${model.error_percentage.toFixed(1)}% Error
+                    </span>
+                </div>
+            </div>
+        `;
+        
+        rankingsContainer.appendChild(rankCard);
+    });
+    
+    // Create charts
+    createAccuracyChart(comparison.performance_ranking);
+    createErrorChart(comparison.performance_ranking);
+    
+    // Display detailed analysis
+    displayDetailedAnalysis(comparison.model_analysis);
+}
+
+function displayModelInfo(models, trainingStatus) {
+    const container = document.getElementById('modelInfoCards');
+    container.innerHTML = '';
+    
+    Object.keys(models).forEach(modelKey => {
+        const model = models[modelKey];
+        const status = trainingStatus[modelKey];
+        
+        const card = document.createElement('div');
+        card.className = 'col-md-6 mb-4';
+        
+        const statusBadge = status.trained ? 
+            '<span class="badge bg-success">Trained</span>' : 
+            '<span class="badge bg-warning">Not Trained</span>';
+        
+        card.innerHTML = `
+            <div class="card h-100">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5><i class="fas fa-cogs model-icon"></i>${model.name}</h5>
+                    ${statusBadge}
+                </div>
+                <div class="card-body">
+                    <p class="card-text">${model.description}</p>
+                    
+                    <h6 class="text-success"><i class="fas fa-check-circle"></i> Strengths:</h6>
+                    <ul class="list-unstyled">
+                        ${model.pros.slice(0, 3).map(pro => `<li><i class="fas fa-plus text-success me-2"></i>${pro}</li>`).join('')}
+                    </ul>
+                    
+                    <h6 class="text-warning"><i class="fas fa-exclamation-triangle"></i> Limitations:</h6>
+                    <ul class="list-unstyled">
+                        ${model.cons.slice(0, 3).map(con => `<li><i class="fas fa-minus text-warning me-2"></i>${con}</li>`).join('')}
+                    </ul>
+                    
+                    <h6 class="text-info"><i class="fas fa-lightbulb"></i> Best For:</h6>
+                    <ul class="list-unstyled">
+                        ${model.best_for.slice(0, 2).map(use => `<li><i class="fas fa-arrow-right text-info me-2"></i>${use}</li>`).join('')}
+                    </ul>
+                    
+                    <div class="mt-3">
+                        <small class="text-muted">
+                            <strong>Algorithm Type:</strong> ${model.algorithm_type}<br>
+                            <strong>Parameters:</strong> ${JSON.stringify(model.parameters)}
+                        </small>
+                    </div>
+                </div>
+            </div>
+        `;
+        
+        container.appendChild(card);
+    });
+    
+    // Wrap cards in row
+    container.className = 'row';
+}
+
+function displayDetailedAnalysis(modelAnalysis) {
+    const container = document.getElementById('modelAnalysis');
+    container.innerHTML = '';
+    
+    Object.keys(modelAnalysis).forEach(modelKey => {
+        const analysis = modelAnalysis[modelKey];
+        
+        const analysisCard = document.createElement('div');
+        analysisCard.className = 'model-explanation mb-4';
+        
+        analysisCard.innerHTML = `
+            <h5>${analysis.name} Analysis</h5>
+            
+            <div class="row mb-3">
+                <div class="col-md-3">
+                    <strong>Rank:</strong> #${analysis.performance.rank}
+                </div>
+                <div class="col-md-3">
+                    <strong>Accuracy:</strong> ${analysis.performance.accuracy_percentage}%
+                </div>
+                <div class="col-md-3">
+                    <strong>Complexity:</strong> ${analysis.complexity}
+                </div>
+                <div class="col-md-3">
+                    <strong>Interpretability:</strong> ${analysis.interpretability}
+                </div>
+            </div>
+            
+            <div class="alert alert-info">
+                <strong>Recommendation:</strong> ${analysis.recommendation}
+            </div>
+            
+            <div class="row">
+                <div class="col-md-6">
+                    <h6 class="text-success">Strengths:</h6>
+                    <ul>
+                        ${analysis.strengths.map(strength => `<li>${strength}</li>`).join('')}
+                    </ul>
+                </div>
+                <div class="col-md-6">
+                    <h6 class="text-warning">Weaknesses:</h6>
+                    <ul>
+                        ${analysis.weaknesses.map(weakness => `<li>${weakness}</li>`).join('')}
+                    </ul>
+                </div>
+            </div>
+            
+            <div class="mt-3">
+                <h6 class="text-info">Best Use Cases:</h6>
+                <ul>
+                    ${analysis.use_cases.map(useCase => `<li>${useCase}</li>`).join('')}
+                </ul>
+            </div>
+        `;
+        
+        container.appendChild(analysisCard);
+    });
+}
+
+function createAccuracyChart(performanceData) {
+    const ctx = document.getElementById('accuracyChart').getContext('2d');
+    
+    if (accuracyChart) {
+        accuracyChart.destroy();
+    }
+    
+    const colors = ['#4CAF50', '#2196F3', '#FF9800', '#9C27B0'];
+    
+    accuracyChart = new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: performanceData.map(model => model.name),
+            datasets: [{
+                label: 'Accuracy (R²)',
+                data: performanceData.map(model => model.accuracy_percentage),
+                backgroundColor: colors,
+                borderColor: colors.map(color => color + '80'),
+                borderWidth: 2
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    display: false
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    max: 100,
+                    ticks: {
+                        callback: function(value) {
+                            return value + '%';
+                        }
+                    }
+                }
+            }
+        }
+    });
+}
+
+function createErrorChart(performanceData) {
+    const ctx = document.getElementById('errorChart').getContext('2d');
+    
+    if (errorChart) {
+        errorChart.destroy();
+    }
+    
+    const colors = ['#FF5722', '#E91E63', '#9C27B0', '#673AB7'];
+    
+    errorChart = new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: performanceData.map(model => model.name),
+            datasets: [{
+                label: 'Mean Absolute Error',
+                data: performanceData.map(model => model.mae),
+                backgroundColor: colors[0] + '20',
+                borderColor: colors[0],
+                borderWidth: 3,
+                fill: true,
+                tension: 0.4
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    display: false
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true
+                }
+            }
+        }
+    });
+}
+
+// Helper functions
+function getRankIcon(rank) {
+    switch(rank) {
+        case 1: return '🏆';
+        case 2: return '🥈';
+        case 3: return '🥉';
+        default: return '📊';
+    }
+}
+
+function getPerformanceColor(accuracy) {
+    if (accuracy >= 90) return '#4CAF50';
+    if (accuracy >= 80) return '#2196F3';
+    if (accuracy >= 70) return '#FF9800';
+    return '#F44336';
+}
+
+function showElement(elementId) {
+    document.getElementById(elementId).style.display = 'block';
+}
+
+function hideElement(elementId) {
+    document.getElementById(elementId).style.display = 'none';
+}
+
+function showLoading(elementId) {
+    document.getElementById(elementId).style.display = 'block';
+}
+
+function hideLoading(elementId) {
+    document.getElementById(elementId).style.display = 'none';
+}
+
+// Dataset Management Functions
+async function refreshAnalytics() {
+    try {
+        console.log('Refreshing analytics...');
+        
+        // Show placeholder while loading
+        showAnalyticsPlaceholder();
+        showModelComparisonPlaceholder();
+        
+        // Load fresh data
+        await loadWeatherData();
+        
+        // Scroll to analytics section to show the update
+        const analyticsSection = document.getElementById('analytics');
+        if (analyticsSection) {
+            analyticsSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+    } catch (error) {
+        console.error('Error refreshing analytics:', error);
+        showAnalyticsPlaceholder(); // Show placeholder if error occurs
+        showModelComparisonPlaceholder(); // Show placeholder if error occurs
+    }
+}
+
+async function loadAvailableDatasets() {
+    try {
+        const response = await fetch(`${API_BASE_URL}/datasets`);
+        const result = await response.json();
+        
+        if (result.status === 'success') {
+            updateDatasetSelect(result.datasets);
+            updateCurrentDataset(result.current_dataset);
+        } else {
+            console.error('Failed to load datasets:', result.message);
+        }
+    } catch (error) {
+        console.error('Error loading datasets:', error);
+    }
+}
+
+function updateDatasetSelect(datasets) {
+    const select = document.getElementById('datasetSelect');
+    
+    if (datasets.length === 0) {
+        select.innerHTML = '<option value="">No datasets available</option>';
+        return;
+    }
+    
+    // Clear existing options and add placeholder
+    select.innerHTML = '<option value="">Select a dataset to switch...</option>';
+    
+    datasets.forEach(dataset => {
+        const option = document.createElement('option');
+        option.value = dataset.path;
+        option.textContent = `${dataset.filename} (${dataset.records} records)`;
+        select.appendChild(option);
+    });
+}
+
+function updateCurrentDataset(currentPath) {
+    const currentDatasetSpan = document.getElementById('currentDataset');
+    const filename = currentPath ? currentPath.split('/').pop() : 'Unknown';
+    currentDatasetSpan.textContent = filename;
+}
+
+async function switchDataset() {
+    const select = document.getElementById('datasetSelect');
+    const selectedPath = select.value;
+    
+    if (!selectedPath) {
+        alert('Please select a dataset first');
+        return;
+    }
+    
+    if (confirm('Are you sure you want to switch datasets? This will retrain all models.')) {
+        try {
+            const response = await fetch(`${API_BASE_URL}/datasets/switch`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ dataset_path: selectedPath })
+            });
+            
+            const result = await response.json();
+            
+            if (result.status === 'success') {
+                // Update UI
+                updateCurrentDataset(selectedPath);
+                
+                // Show success message
+                alert(`Successfully switched to ${result.dataset_info.filename}!\n\nDataset Info:\n- Records: ${result.dataset_info.total_records}\n- Date Range: ${result.dataset_info.date_range}\n\nModels have been retrained with the new dataset.`);
+                
+                // Refresh data
+                await loadWeatherData();
+                loadSessionData();
+                
+                // Clear any existing results
+                hideResult('predictionResult');
+                hideResult('forecastResult');
+                hideResult('uploadResult');
+                
+                // Force refresh analytics section with delay
+                setTimeout(() => {
+                    refreshAnalytics();
+                }, 1000);
+                
+            } else {
+                alert('Failed to switch dataset: ' + result.message);
+            }
+        } catch (error) {
+            console.error('Error switching dataset:', error);
+            alert('Failed to switch dataset. Please check server connection.');
+        }
+    }
+}

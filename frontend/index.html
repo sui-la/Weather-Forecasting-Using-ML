@@ -289,6 +289,9 @@
                     <li class="nav-item">
                         <a class="nav-link" href="#analytics">Analytics</a>
                     </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#models">Model Comparison</a>
+                    </li>
                 </ul>
             </div>
         </div>
@@ -316,7 +319,7 @@
                             <i class="fas fa-brain"></i>
                         </div>
                         <h5>Multiple ML Models</h5>
-                        <p>Random Forest, ANN, SVM, and KNN for comprehensive predictions</p>
+                        <p>ANN, SVM, and KNN for comprehensive predictions</p>
                     </div>
                 </div>
                 <div class="col-md-3 mb-3">
@@ -358,6 +361,32 @@
                             <h4><i class="fas fa-magic me-2"></i>Weather Prediction</h4>
                         </div>
                         <div class="card-body">
+                            <!-- Dataset Selection Section -->
+                            <div class="card mb-4">
+                                <div class="card-header bg-info text-white">
+                                    <h6><i class="fas fa-database me-2"></i>Select Dataset</h6>
+                                </div>
+                                <div class="card-body">
+                                    <div class="row">
+                                        <div class="col-md-8">
+                                            <select class="form-control" id="datasetSelect">
+                                                <option value="" disabled selected>Click to load available datasets...</option>
+                                            </select>
+                                        </div>
+                                        <div class="col-md-4">
+                                            <button type="button" class="btn btn-info w-100" onclick="switchDataset()">
+                                                <i class="fas fa-exchange-alt me-2"></i>Switch Dataset
+                                            </button>
+                                        </div>
+                                    </div>
+                                    <div class="mt-2">
+                                        <small class="text-muted">
+                                            <strong>Current Dataset:</strong> <span id="currentDataset">Loading...</span>
+                                        </small>
+                                    </div>
+                                </div>
+                            </div>
+
                             <!-- Download Weather Data Section -->
                             <div class="download-area mb-4">
                                 <h5 class="mb-3">
@@ -405,9 +434,30 @@
                                     Upload Custom Dataset & Train Models
                                 </h5>
                                 <p class="text-muted mb-3">
-                                    Upload your own CSV dataset to train custom models. 
-                                    Required columns: date, tavg, tmin, tmax, prcp, wspd, pres
+                                    Upload your own CSV dataset to train custom models.<br>
+                                    <strong>Required columns (exactly 7):</strong> date, tavg, tmin, tmax, prcp, wspd, pres<br>
+                                    <strong>Date format:</strong> YYYY-MM-DD (e.g., 2025-01-15)<br>
+                                    <small class="text-warning">
+                                        <i class="fas fa-exclamation-triangle me-1"></i>
+                                        Your CSV file should contain ONLY these 7 columns in the exact order listed above.
+                                    </small>
                                 </p>
+                                
+                                <!-- CSV Format Example -->
+                                <div class="mb-3">
+                                    <button class="btn btn-outline-info btn-sm" type="button" data-bs-toggle="collapse" data-bs-target="#csvExample" aria-expanded="false">
+                                        <i class="fas fa-eye me-1"></i>Show CSV Format Example
+                                    </button>
+                                    <div class="collapse mt-2" id="csvExample">
+                                        <div class="card card-body bg-light">
+                                            <h6 class="mb-2"><i class="fas fa-file-csv me-1"></i>Sample CSV Format:</h6>
+                                            <pre class="mb-0"><code>date,tavg,tmin,tmax,prcp,wspd,pres
+2025-01-01,15.5,12.0,18.0,0.0,5.2,1013.2
+2025-01-02,16.2,13.1,19.5,2.5,4.8,1012.8
+2025-01-03,14.8,11.5,17.2,0.0,6.1,1014.1</code></pre>
+                                        </div>
+                                    </div>
+                                </div>
                                 <div class="row">
                                     <div class="col-md-8">
                                         <input type="file" class="form-control" id="datasetFile" accept=".csv">
@@ -433,23 +483,15 @@
                                     <i class="fas fa-info-circle"></i>
                                 </button></h6>
                                 <div class="row">
-                                    <div class="col-md-3 mb-2">
+                                    <div class="col-md-4 mb-2">
                                         <div class="form-check">
-                                            <input class="form-check-input" type="radio" name="modelType" id="randomForest" value="random_forest" checked>
-                                            <label class="form-check-label" for="randomForest">
-                                                <i class="fas fa-tree me-1"></i>Random Forest
-                                            </label>
-                                        </div>
-                                    </div>
-                                    <div class="col-md-3 mb-2">
-                                        <div class="form-check">
-                                            <input class="form-check-input" type="radio" name="modelType" id="ann" value="ann">
+                                            <input class="form-check-input" type="radio" name="modelType" id="ann" value="ann" checked>
                                             <label class="form-check-label" for="ann">
                                                 <i class="fas fa-network-wired me-1"></i>Neural Network
                                             </label>
                                         </div>
                                     </div>
-                                    <div class="col-md-3 mb-2">
+                                    <div class="col-md-4 mb-2">
                                         <div class="form-check">
                                             <input class="form-check-input" type="radio" name="modelType" id="svm" value="svm">
                                             <label class="form-check-label" for="svm">
@@ -457,7 +499,7 @@
                                             </label>
                                         </div>
                                     </div>
-                                    <div class="col-md-3 mb-2">
+                                    <div class="col-md-4 mb-2">
                                         <div class="form-check">
                                             <input class="form-check-input" type="radio" name="modelType" id="knn" value="knn">
                                             <label class="form-check-label" for="knn">
@@ -548,7 +590,6 @@
                                 <div class="col-md-4 mb-3">
                                     <label for="forecastModel" class="form-label">Model</label>
                                     <select class="form-control" id="forecastModel">
-                                        <option value="random_forest">Random Forest</option>
                                         <option value="ann">Neural Network</option>
                                         <option value="svm">SVM</option>
                                         <option value="knn">KNN</option>
@@ -607,39 +648,191 @@
                 <div class="col-12">
                     <div class="card">
                         <div class="card-header bg-warning text-dark text-center">
-                            <h4><i class="fas fa-chart-bar me-2"></i>Weather Analytics</h4>
+                            <div class="row align-items-center">
+                                <div class="col-md-8">
+                                    <h4><i class="fas fa-chart-bar me-2"></i>Weather Analytics</h4>
+                                </div>
+                                <div class="col-md-4 text-end">
+                                    <button type="button" class="btn btn-outline-dark btn-sm" onclick="refreshAnalytics()">
+                                        <i class="fas fa-sync-alt me-1"></i>Refresh
+                                    </button>
+                                </div>
+                            </div>
                         </div>
                         <div class="card-body">
-                            <div class="row mb-4">
-                                <div class="col-md-3 mb-3">
-                                    <div class="stats-card">
-                                        <h3 id="totalRecords">0</h3>
-                                        <p>Total Records</p>
-                                    </div>
+                            <!-- Placeholder when no dataset is selected -->
+                            <div id="analyticsPlaceholder" class="text-center py-5">
+                                <div class="mb-4">
+                                    <i class="fas fa-database" style="font-size: 4rem; color: #6c757d;"></i>
                                 </div>
-                                <div class="col-md-3 mb-3">
-                                    <div class="stats-card">
-                                        <h3 id="avgTemp">0°C</h3>
-                                        <p>Average Temperature</p>
-                                    </div>
-                                </div>
-                                <div class="col-md-3 mb-3">
-                                    <div class="stats-card">
-                                        <h3 id="maxTemp">0°C</h3>
-                                        <p>Maximum Temperature</p>
-                                    </div>
-                                </div>
-                                <div class="col-md-3 mb-3">
-                                    <div class="stats-card">
-                                        <h3 id="rainyDays">0</h3>
-                                        <p>Rainy Days</p>
+                                <h4 class="text-muted mb-3">No Dataset Selected</h4>
+                                <p class="text-muted mb-4">Please choose or upload a dataset before viewing analytics</p>
+                                <div class="row justify-content-center">
+                                    <div class="col-md-6">
+                                        <div class="alert alert-info">
+                                            <i class="fas fa-info-circle me-2"></i>
+                                            <strong>How to get started:</strong>
+                                            <ul class="mb-0 mt-2 text-start">
+                                                <li>Select a dataset from the dropdown above</li>
+                                                <li>Click "Switch Dataset" to load the data</li>
+                                                <li>Or upload your own CSV file</li>
+                                            </ul>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
 
-                            <div class="chart-container">
-                                <canvas id="weatherChart"></canvas>
+                            <!-- Analytics content (hidden initially) -->
+                            <div id="analyticsContent" style="display: none;">
+                                <div class="row mb-4">
+                                    <div class="col-md-3 mb-3">
+                                        <div class="stats-card">
+                                            <h3 id="totalRecords">0</h3>
+                                            <p>Total Records</p>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-3 mb-3">
+                                        <div class="stats-card">
+                                            <h3 id="avgTemp">0°C</h3>
+                                            <p>Average Temperature</p>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-3 mb-3">
+                                        <div class="stats-card">
+                                            <h3 id="maxTemp">0°C</h3>
+                                            <p>Maximum Temperature</p>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-3 mb-3">
+                                        <div class="stats-card">
+                                            <h3 id="rainyDays">0</h3>
+                                            <p>Rainy Days</p>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="chart-container">
+                                    <canvas id="weatherChart"></canvas>
+                                </div>
                             </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Model Comparison Section -->
+        <section id="models" class="mb-5">
+            <div class="row">
+                <div class="col-12">
+                    <div class="card">
+                        <div class="card-header bg-info text-white text-center">
+                            <h4><i class="fas fa-chart-line me-2"></i>Model Comparison & Analysis</h4>
+                        </div>
+                        <div class="card-body">
+                            <!-- Placeholder when no dataset is selected -->
+                            <div id="modelComparisonPlaceholder" class="text-center py-5">
+                                <div class="mb-4">
+                                    <i class="fas fa-brain" style="font-size: 4rem; color: #6c757d;"></i>
+                                </div>
+                                <h4 class="text-muted mb-3">No Dataset Selected</h4>
+                                <p class="text-muted mb-4">Please choose or upload a dataset before comparing models</p>
+                                <div class="row justify-content-center">
+                                    <div class="col-md-6">
+                                        <div class="alert alert-info">
+                                            <i class="fas fa-info-circle me-2"></i>
+                                            <strong>Model comparison requires:</strong>
+                                            <ul class="mb-0 mt-2 text-start">
+                                                <li>A dataset with weather data</li>
+                                                <li>Trained machine learning models</li>
+                                                <li>Performance metrics calculation</li>
+                                            </ul>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Model comparison content (hidden initially) -->
+                            <div id="modelComparisonContent" style="display: none;">
+                                <div class="row mb-4">
+                                    <div class="col-md-6">
+                                        <button class="btn btn-primary btn-lg w-100" onclick="loadModelComparison()">
+                                            <i class="fas fa-sync-alt me-2"></i>Compare All Models
+                                        </button>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <button class="btn btn-outline-info btn-lg w-100" onclick="loadModelInfo()">
+                                            <i class="fas fa-info-circle me-2"></i>Model Information
+                                        </button>
+                                    </div>
+                                </div>
+
+                                <!-- Model Comparison Results -->
+                                <div id="modelComparisonResults" style="display: none;">
+                                <!-- Best Model Recommendation -->
+                                <div class="row mb-4">
+                                    <div class="col-12">
+                                        <div class="alert alert-success" id="bestModelAlert">
+                                            <h5><i class="fas fa-trophy me-2"></i>Recommended Model</h5>
+                                            <p id="bestModelInfo">Loading...</p>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Performance Rankings -->
+                                <div class="row mb-4">
+                                    <div class="col-12">
+                                        <h5><i class="fas fa-ranking-star me-2"></i>Performance Rankings</h5>
+                                        <div id="modelRankings"></div>
+                                    </div>
+                                </div>
+
+                                <!-- Model Comparison Charts -->
+                                <div class="row mb-4">
+                                    <div class="col-md-6">
+                                        <div class="card">
+                                            <div class="card-header">
+                                                <h6><i class="fas fa-chart-bar me-2"></i>Accuracy Comparison (R²)</h6>
+                                            </div>
+                                            <div class="card-body">
+                                                <canvas id="accuracyChart" height="200"></canvas>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="card">
+                                            <div class="card-header">
+                                                <h6><i class="fas fa-chart-line me-2"></i>Error Comparison (MAE)</h6>
+                                            </div>
+                                            <div class="card-body">
+                                                <canvas id="errorChart" height="200"></canvas>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Detailed Model Analysis -->
+                                <div class="row">
+                                    <div class="col-12">
+                                        <h5><i class="fas fa-microscope me-2"></i>Detailed Model Analysis</h5>
+                                        <div id="modelAnalysis"></div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Model Information Results -->
+                            <div id="modelInfoResults" style="display: none;">
+                                <div id="modelInfoCards"></div>
+                            </div>
+
+                            <!-- Loading State -->
+                            <div id="modelComparisonLoading" class="loading">
+                                <div class="spinner-border" role="status">
+                                    <span class="visually-hidden">Loading...</span>
+                                </div>
+                                <p>Analyzing models...</p>
+                            </div>
+                            </div> <!-- Close modelComparisonContent -->
                         </div>
                     </div>
                 </div>
@@ -665,18 +858,6 @@
                     <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <div class="modal-body">
-                    <div class="model-explanation">
-                        <h5><i class="fas fa-tree model-icon"></i>Random Forest</h5>
-                        <p><strong>How it works:</strong> Random Forest is an ensemble learning method that constructs multiple decision trees during training and outputs the mean prediction of the individual trees.</p>
-                        <ul>
-                            <li><strong>Ensemble Method:</strong> Combines predictions from multiple decision trees</li>
-                            <li><strong>Randomness:</strong> Each tree is trained on a random subset of data and features</li>
-                            <li><strong>Robustness:</strong> Reduces overfitting and improves accuracy</li>
-                            <li><strong>Feature Importance:</strong> Can identify which weather factors are most important</li>
-                        </ul>
-                        <p><strong>For Weather Prediction:</strong> Uses patterns in temperature, precipitation, wind speed, and pressure to predict future weather conditions.</p>
-                    </div>
-
                     <div class="model-explanation">
                         <h5><i class="fas fa-network-wired model-icon"></i>Neural Network (ANN)</h5>
                         <p><strong>How it works:</strong> Artificial Neural Networks are inspired by biological neural networks and consist of interconnected nodes (neurons) organized in layers.</p>
